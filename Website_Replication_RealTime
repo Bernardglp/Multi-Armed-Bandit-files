@@ -112,24 +112,28 @@ for(y in 1:10)
 
 df_tr_stack <- bind_rows(df_tr, .id = "Simulation" )
 
-df_tr_stack_avg <- df_tr_stack %>% 
-  group_by(Website_Version,Tempo) %>%
-  summarise(Prob_Med = mean(Probability))
-
 df_qt <- df_tr_stack %>%
   group_by(Simulation) %>%
   summarise(Number_Observations = n() / 2)
-
 summary(df_qt$Number_Observations)
 
+
+df_tr_S6 <- filter(df_tr_stack,Simulation %in% c(4,6,8)) %>%
+            mutate(Version = ifelse(Website_Version == "Prob_V1","V1(p = 0.1%)", "V2(p = 0.11%)"))
+
+
 #Monte Carlo Probability Graph
-ggplotly(ggplot(data = df_tr_stack_avg, aes(x = Tempo, y = Prob_Med, color = Website_Version )) +
+ggplot(data = df_tr_S6, aes(x = Tempo/1000, y = Probability, color = Version )) +
            geom_line()+
-           geom_hline(aes(yintercept = 0.975), linetype='dotted') +
-           theme_classic())
+           geom_hline(aes(yintercept = 0.95), linetype='dotted') +
+           theme_classic() +
+           labs(title = "Monte Carlo Probability step by step",
+                x = "Number of Observations (K)") +
+          facet_grid(Simulation ~ .)
+
 
 #Box-Plot Number of Observations
-ggplot(data = df_qt, aes(y = log(Number_Observations))) +
+ggplot(data = df_qt, aes(y = Number_Observations)) +
   geom_boxplot(size = 0.5, fill = "#317191") + 
   theme_classic() + 
   labs(title = "Log Number of Observations required", x = "10 Simulations")
